@@ -13,6 +13,5 @@ public class GarbagePosition {
     private Long id;
     private String displayName;
     private GarbageCoordinates coordinates;
-    private Collection<GarbageCoordinates> trace;
     private AddressDetail address;
 }

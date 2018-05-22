@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.Collection;
 
 public interface PlasticContainerRepository extends CrudRepository<PlasticContainer, Long> {
-    Collection<PlasticContainer> findByPositionAddressStreetInformationXStartPosition(double d);
     Collection<PlasticContainer> findByPositionAddressHouseholdName(String name);
     @Query("MATCH (p:PlasticContainer)-[:POSITION]-(gp:GarbagePosition)-[:ADDRESS]-(ad:AddressDetail)-[:HOUSEHOLD]-(h:HouseholdDetail) WHERE h.name = {name} RETURN p")
     Collection<PlasticContainer> findByAddressHouseholdName(@Param("name") String name);

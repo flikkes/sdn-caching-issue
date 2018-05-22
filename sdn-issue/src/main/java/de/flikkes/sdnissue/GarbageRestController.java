@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
+import java.util.UUID;
 
 @RestController
 public class GarbageRestController {
@@ -19,57 +20,78 @@ public class GarbageRestController {
     @Autowired
     private Session session;
 
-    @RequestMapping("addplasticcontainer")
-    public ResponseEntity addPlayticContainer() {
+    @RequestMapping("add/{householdName}/{persons}/{street}/{houseNumber}/{xStart}/{yStart}/{xEnd}/{yEnd}/{xPos}/{yPos}")
+    public ResponseEntity addPlasticContainer(
+            @PathVariable String householdName, @PathVariable int persons, @PathVariable String street,
+            @PathVariable String houseNumber, @PathVariable double xStart,
+            @PathVariable double yStart, @PathVariable double xEnd,
+            @PathVariable double yEnd, @PathVariable double xPos,
+            @PathVariable double yPos) {
         GarbageType garbageType = new GarbageType();
         garbageType.setCategory(GarbageCategory.PLASTIC);
         garbageType.setHealth(GarbageHealth.ACCEPTABLE);
         HouseholdDetail householdDetail = new HouseholdDetail();
-        householdDetail.setName("Müller");
-        householdDetail.setPersons(3);
+        householdDetail.setName(householdName);
+        householdDetail.setPersons(persons);
         householdDetail.setType(HouseholdType.PRIVATE);
         AddressDetail addressDetail = new AddressDetail();
-        addressDetail.setDisplayName("Müllerstraße 9");
+        addressDetail.setDisplayName(street + " " + houseNumber);
         addressDetail.setHousehold(householdDetail);
         addressDetail.setStreet(new StreetDetail(
                 null,
-                "Müllerstraße",
-                "9",
+                street,
+                houseNumber,
                 new NavigationInformation(
                         null,
-                        1231.423,
-                        534.23,
-                        23.453,
-                        2.5456,
+                        xStart,
+                        yStart,
+                        xEnd,
+                        yEnd,
                         true)
         ));
         GarbagePosition garbagePosition = new GarbagePosition();
-        garbagePosition.setDisplayName("Bei Müllers");
+        garbagePosition.setDisplayName("At " + householdName + "s");
         garbagePosition.setAddress(addressDetail);
-        garbagePosition.setCoordinates(new GarbageCoordinates(null, 234.54, 34545.5, "Vor dem Haus"));
+        garbagePosition.setCoordinates(new GarbageCoordinates(null, xPos, yPos, "In front of the house"));
         PlasticContainer plasticContainer = new PlasticContainer(garbageType, garbagePosition);
-        plasticContainer.setHouseholdName("Die Müllers");
-        plasticContainer.setInternalName("vbbndfghdfgsdgtejd");
+        plasticContainer.setHouseholdName("The " + householdName + "s");
+        plasticContainer.setInternalName(UUID.randomUUID().toString());
         plasticContainer.setLastTimeEmptied(new Date());
         plasticContainerRepository.save(plasticContainer);
         return ResponseEntity.ok(plasticContainer);
     }
 
-    @RequestMapping("getplasticcontainer/{xStartPosition}")
-    public ResponseEntity getPlasticContainerByNavigationInfoXStartPosition(@PathVariable double xStartPosition) {
-        return ResponseEntity.ok(plasticContainerRepository.findByPositionAddressStreetInformationXStartPosition(xStartPosition));
+    @RequestMapping("normally-from-repository/{householdName}")
+    public ResponseEntity getNormallyByHouseholdName(@PathVariable String householdName) {
+        return ResponseEntity.ok(plasticContainerRepository.findByPositionAddressHouseholdName(householdName));
     }
 
-    @RequestMapping("byhousehold/{householdName}")
-    public ResponseEntity getPlasticContainerByPositionHouseholdName(@PathVariable String householdName) {
-        session.loadAll(PlasticContainer.class);
-//        return ResponseEntity.ok(session.query(PlasticContainer.class,
-//                "MATCH (p:PlasticContainer)" +
-//                        "-[pos:POSITION]-(gp:GarbagePosition)" +
-//                        "-[addr:ADDRESS]-(ad:AddressDetail)" +
-//                        "-[hh:HOUSEHOLD]-(h:HouseholdDetail) " +
-//                        "WHERE h.name = {name} " +
-//                        "RETURN p, pos, gp, addr, ad, hh, h", Values.parameters("name", householdName).asMap()));
+    @RequestMapping("custom-query-from-repository/{householdName}")
+    public ResponseEntity getPlasticContainerWithCustomQueryByHouseholdName(@PathVariable String householdName) {
+        return ResponseEntity.ok(plasticContainerRepository.findByAddressHouseholdName(householdName));
+    }
+
+    @RequestMapping("session-query/{householdName}")
+    public ResponseEntity getPlayticContainerWithSessionQueryByHouseholdName(@PathVariable String householdName) {
+        return ResponseEntity.ok(session.query(PlasticContainer.class,
+                "MATCH (p:PlasticContainer)" +
+                        "-[pos:POSITION]-(gp:GarbagePosition)" +
+                        "-[addr:ADDRESS]-(ad:AddressDetail)" +
+                        "-[hh:HOUSEHOLD]-(h:HouseholdDetail) " +
+                        "WHERE h.name = {name} " +
+                        "RETURN p", Values.parameters("name", householdName).asMap()));
+    }
+
+    @RequestMapping("workaround/{householdName}")
+    public ResponseEntity getPlasticContainerWithWorkaroundByHouseholdName(@PathVariable String householdName) {
+        session.loadAll(PlasticContainer.class, 5);
+        session.loadAll(GarbagePosition.class, 5);
+        session.loadAll(GarbageType.class, 5);
+        session.loadAll(AddressDetail.class, 5);
+        session.loadAll(HouseholdDetail.class, 5);
+        session.loadAll(StreetDetail.class, 5);
+        session.loadAll(GarbageCoordinates.class, 5);
+        session.loadAll(NavigationInformation.class, 5);
         return ResponseEntity.ok(plasticContainerRepository.findByAddressHouseholdName(householdName));
     }
 }
