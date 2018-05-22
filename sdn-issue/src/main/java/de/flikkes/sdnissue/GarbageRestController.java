@@ -64,6 +64,7 @@ public class GarbageRestController {
 
     /**
      * Favourite approach. Returns nothing.
+     *
      * @param householdName
      * @return
      */
@@ -74,6 +75,7 @@ public class GarbageRestController {
 
     /**
      * Second favourite approach. At least returns something. Would be nice to have it like this.
+     *
      * @param householdName
      * @return
      */
@@ -84,6 +86,7 @@ public class GarbageRestController {
 
     /**
      * Wrote this to see if the depth differs from {@link #getPlasticContainerWithCustomQueryByHouseholdName(String)}
+     *
      * @param householdName
      * @return
      */
@@ -100,6 +103,7 @@ public class GarbageRestController {
 
     /**
      * Currently returns the expected result. Obviously makes use of a caching bug with {@link Session}.
+     *
      * @param householdName
      * @return
      */
@@ -118,6 +122,7 @@ public class GarbageRestController {
 
     /**
      * Currently cleanest version of the workaround. Returns the expected result.
+     *
      * @param householdName
      * @return
      */
