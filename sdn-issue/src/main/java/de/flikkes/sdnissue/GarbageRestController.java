@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
 
@@ -61,16 +62,31 @@ public class GarbageRestController {
         return ResponseEntity.ok(plasticContainer);
     }
 
+    /**
+     * Favourite approach. Returns nothing.
+     * @param householdName
+     * @return
+     */
     @RequestMapping("normally-from-repository/{householdName}")
     public ResponseEntity getNormallyByHouseholdName(@PathVariable String householdName) {
         return ResponseEntity.ok(plasticContainerRepository.findByPositionAddressHouseholdName(householdName));
     }
 
+    /**
+     * Second favourite approach. At least returns something. Would be nice to have it like this.
+     * @param householdName
+     * @return
+     */
     @RequestMapping("custom-query-from-repository/{householdName}")
     public ResponseEntity getPlasticContainerWithCustomQueryByHouseholdName(@PathVariable String householdName) {
         return ResponseEntity.ok(plasticContainerRepository.findByAddressHouseholdName(householdName));
     }
 
+    /**
+     * Wrote this to see if the depth differs from {@link #getPlasticContainerWithCustomQueryByHouseholdName(String)}
+     * @param householdName
+     * @return
+     */
     @RequestMapping("session-query/{householdName}")
     public ResponseEntity getPlayticContainerWithSessionQueryByHouseholdName(@PathVariable String householdName) {
         return ResponseEntity.ok(session.query(PlasticContainer.class,
@@ -82,6 +98,11 @@ public class GarbageRestController {
                         "RETURN p", Values.parameters("name", householdName).asMap()));
     }
 
+    /**
+     * Currently returns the expected result. Obviously makes use of a caching bug with {@link Session}.
+     * @param householdName
+     * @return
+     */
     @RequestMapping("workaround/{householdName}")
     public ResponseEntity getPlasticContainerWithWorkaroundByHouseholdName(@PathVariable String householdName) {
         session.loadAll(PlasticContainer.class, 5);
@@ -93,5 +114,16 @@ public class GarbageRestController {
         session.loadAll(GarbageCoordinates.class, 5);
         session.loadAll(NavigationInformation.class, 5);
         return ResponseEntity.ok(plasticContainerRepository.findByAddressHouseholdName(householdName));
+    }
+
+    /**
+     * Currently cleanest version of the workaround. Returns the expected result.
+     * @param householdName
+     * @return
+     */
+    @RequestMapping("workaround2/{householdName}")
+    public ResponseEntity getPlasticContainerWithWorkaround2ByHouseholdName(@PathVariable String householdName) {
+        Collection<PlasticContainer> c = plasticContainerRepository.findByAddressHouseholdName(householdName);
+        return ResponseEntity.ok(session.loadAll(c, 5));
     }
 }
